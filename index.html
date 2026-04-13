@@ -55,8 +55,6 @@ body{
 .flabel{display:block;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
 
 /* NOTICE */
-.notice{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.22);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.65;}
-.notice strong{font-weight:700;}
 
 /* FILE UPLOAD */
 .upload-label{
@@ -205,9 +203,6 @@ canvas{width:100%;height:56px;background:rgba(0,0,0,0.5);border:1px solid var(--
   <!-- CARD 1: INPUT -->
   <div class="card">
     <div class="card-title">Transcription</div>
-    <div class="notice">
-      <strong>📱 Open in Chrome</strong> — File upload requires Chrome browser, not the in-app viewer. Save this file, then open it from Chrome.
-    </div>
     <label class="flabel">Anthropic API Key</label>
     <input class="inp" type="password" id="api-key" placeholder="sk-ant-api03-…" autocomplete="off" autocorrect="off" spellcheck="false">
     <label class="flabel">Sheet Music</label>
@@ -278,7 +273,6 @@ canvas{width:100%;height:56px;background:rgba(0,0,0,0.5);border:1px solid var(--
     <div class="card-title">Session Log</div>
     <div class="log-wrap" id="console-out">
       <div class="ll ok">> Scoresmith ready</div>
-      <div class="ll info">> Open in Chrome for file upload</div>
     </div>
     <div class="viz-hd">
       <span class="flabel" style="margin:0">Waveform</span>
@@ -293,9 +287,13 @@ canvas{width:100%;height:56px;background:rgba(0,0,0,0.5);border:1px solid var(--
   </button>
 
   <!-- Status shown during / after playback -->
-  <div class="pb-status" id="pb-status">
-    <div class="rec-dot" id="pb-dot"></div>
-    <span id="pb-msg">Recording…</span>
+  <div class="pb-status" id="pb-status" style="opacity:0;pointer-events:none;">
+    <div class="rec-dot" id="pb-dot" style="display:none;"></div>
+    <span id="pb-msg"></span>
+  </div>
+
+
+
   </div>
 
   <!-- EXPORT — always visible, enabled after first playback -->
@@ -862,15 +860,8 @@ V:2 clef=bass
 
 Transcribe every visible note. Verify bar lengths match time signature.
 OUTPUT ONLY VALID ABC NOTATION. No markdown. No explanation.`;
-    const _body=JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:prompt}]}]});
-    const _headers={'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'};
-    let resp;
-    try{
-      resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:_headers,body:_body});
-    }catch(corsErr){
-      log('Direct call blocked — retrying via proxy…','info');
-      resp=await fetch('https://corsproxy.io/?'+encodeURIComponent('https://api.anthropic.com/v1/messages'),{method:'POST',headers:_headers,body:_body});
-    }
+    const _body=JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4096,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data:b64}},{type:"text",text:prompt}]}]});
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-calls":"true"},body:_body});
     setP(85);
     if(!resp.ok){const ed=await resp.json().catch(()=>({}));throw new Error(ed.error?.message||'HTTP '+resp.status);}
     const data=await resp.json();if(!data.content?.[0])throw new Error('Empty response');
